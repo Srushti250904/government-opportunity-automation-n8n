@@ -1,0 +1,1305 @@
+{
+  "name": "HubZone Final",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "return [0,1,2,3].map(p => ({ json: { page: p } }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -720,
+        0
+      ],
+      "id": "810aec94-5f39-4310-9122-85579a7b333a",
+      "name": "Pages"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -448,
+        0
+      ],
+      "id": "fd20540a-e5fd-4a88-95ea-49176457c965",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "url": "=https://sam.gov/api/prod/sgs/v1/search/?index=opp&page={{$json.page}}&size=25&q=software&is_active=true",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0"
+            },
+            {
+              "name": "Accept",
+              "value": "application/hal+json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -208,
+        16
+      ],
+      "id": "7af65b0a-f97c-4b3e-9dd6-700fe6742695",
+      "name": "SAM API"
+    },
+    {
+      "parameters": {
+        "jsCode": "let rawData = items[0].json.data;\n\nif (!rawData) return [];\n\nlet parsedData = JSON.parse(rawData);\nlet results = parsedData._embedded?.results || [];\n\nreturn results.map(item => {\n\n  const id = item._id || item.id;\n\n  return {\n    json: {\n      publishDate: item.publishDate || null,\n      responseDate: item.responseDeadLine || null,\n      title: item.title || null,\n      noticeId: item.noticeId || null,\n\n      department: item.organizationHierarchy?.[0]?.name || null,\n      office: item.organizationHierarchy?.slice(-1)[0]?.name || null,\n\n      type: item.type?.value || null,\n\n      city: item.organizationHierarchy?.slice(-1)[0]?.address?.city || null,\n      state: item.organizationHierarchy?.slice(-1)[0]?.address?.state || null,\n\n      // ✅ ADD THIS (IMPORTANT)\n      naics: item.naicsCode || item.naics || null,\n\n      // ✅ OPTIONAL (very useful later)\n      psc: item.classificationCode || null,\n\n      url: id\n        ? `https://sam.gov/workspace/contract/opp/${id}/view`\n        : null\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        32,
+        16
+      ],
+      "id": "1b3e8b52-bdce-48f2-9be1-a882cd5d8072",
+      "name": "Parse"
+    },
+    {
+      "parameters": {
+        "jsCode": "const seen = new Set();\n\nreturn items.filter(item => {\n  const key = item.json.title; // 👈 only title\n\n  if (seen.has(key)) {\n    return false;\n  }\n\n  seen.add(key);\n  return true;\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -192,
+        -176
+      ],
+      "id": "ac42300e-5ec1-4aac-af77-59e2ec981c8a",
+      "name": "Remove Duplicates"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1BVhENcGI4NkCI8GRKR41Drzuw8SVJ0qsY_3ryOJG0CU",
+          "mode": "list",
+          "cachedResultName": "Sam.Gov_HubZone",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BVhENcGI4NkCI8GRKR41Drzuw8SVJ0qsY_3ryOJG0CU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1962758448,
+          "mode": "list",
+          "cachedResultName": "IT Bids",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BVhENcGI4NkCI8GRKR41Drzuw8SVJ0qsY_3ryOJG0CU/edit#gid=1962758448"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "publishDate": "={{ $json.publishDate }}",
+            "title": "={{ $json.title }}",
+            "department": "={{ $json.department }}",
+            "office": "={{ $json.office }}",
+            "type": "={{ $json.type }}",
+            "city": "={{ $json.city }}",
+            "state": "={{ $json.state }}",
+            "url": "={{ $json.url }}",
+            "Scraped Date": "={{ new Date().toLocaleDateString(\"en-IN\") }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Scraped Date",
+              "displayName": "Scraped Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "publishDate",
+              "displayName": "publishDate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "department",
+              "displayName": "department",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "office",
+              "displayName": "office",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "type",
+              "displayName": "type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "city",
+              "displayName": "city",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "state",
+              "displayName": "state",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        16,
+        -176
+      ],
+      "id": "82bfb691-4829-4654-a437-478d5a5967f9",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "k9bqs7ZwosjV1uUM",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const allowedNAICS = [\n  \"541511\",\n  \"541512\",\n  \"541513\",\n  \"541519\",\n  \"511210\",\n  \"519290\",\n  \"518210\",\n  \"513210\" // ✅ IMPORTANT (new SAM.gov code)\n];\n\nreturn items.filter(item => {\n  const type = item.json.type?.toLowerCase() || \"\";\n\n  // ✅ extract NAICS code from array\n  const naicsArray = item.json.naics || [];\n  const naicsCode = naicsArray[0]?.code || \"\";\n\n  const isBiddable = type.includes(\"solicitation\");\n  const isCorrectNAICS = allowedNAICS.includes(naicsCode);\n\n  return isBiddable && isCorrectNAICS;\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        16
+      ],
+      "id": "72f54123-94a2-4945-9dc3-b509c7bc1c02",
+      "name": "Filter Biddable"
+    },
+    {
+      "parameters": {
+        "content": "IT BIDS ",
+        "height": 480,
+        "width": 1296,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -896,
+        -224
+      ],
+      "typeVersion": 1,
+      "id": "389250e5-d26e-43cd-bac5-8cdf0e020286",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "jsCode": "return Array.from({ length: 20 }, (_, i) => ({ json: { page: i } }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -592,
+        624
+      ],
+      "id": "34695caa-c3b6-4865-8aec-7928326eecd9",
+      "name": "Pages3"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -384,
+        624
+      ],
+      "id": "fb8b3c89-ec8b-4659-b19e-333edebbc007",
+      "name": "Loop Over Items3"
+    },
+    {
+      "parameters": {
+        "url": "=https://sam.gov/api/prod/sgs/v1/search/?index=opp&page={{$json.page}}&size=25&q=HUBZone OR \"HUBZone Small Business\" OR HUBZone set-aside&is_active=true",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0"
+            },
+            {
+              "name": "Accept",
+              "value": "application/hal+json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -192,
+        640
+      ],
+      "id": "cbb6c1d2-9c5d-48f0-9119-7d3a30c1fa96",
+      "name": "SAM API3"
+    },
+    {
+      "parameters": {
+        "jsCode": "let rawData = items[0].json.data;\n\nif (!rawData) return [];\n\nlet parsedData = JSON.parse(rawData);\nlet results = parsedData._embedded?.results || [];\n\n// ✅ IT NAICS Codes (UPDATED)\nconst IT_NAICS = [\n  \"541511\",\n  \"541512\",\n  \"541513\",\n  \"541519\",\n  \"518210\",\n  \"513210\" // ✅ software publishers\n];\n\n// ✅ IT Keywords\nconst IT_KEYWORDS = [\n  \"software\",\n  \"cloud\",\n  \"cyber\",\n  \"data\",\n  \"ai\",\n  \"machine learning\",\n  \"it support\",\n  \"network\",\n  \"system\",\n  \"application\",\n  \"saas\",\n  \"devops\",\n  \"security\",\n  \"database\"\n];\n\n// ✅ NON-IT Keywords (NEW 🔥)\nconst NON_IT_KEYWORDS = [\n  \"construction\",\n  \"gasket\",\n  \"valve\",\n  \"mechanical\",\n  \"hardware\",\n  \"building\",\n  \"repair\",\n  \"maintenance\",\n  \"equipment\",\n  \"tractor\",\n  \"pump\",\n  \"roof\",\n  \"concrete\",\n  \"aircraft\",\n  \"radar\",\n  \"weapon\",\n  \"missile\",\n  \"engine\",\n  \"vehicle\",\n  \"fuel\",\n  \"lab\",\n  \"ship\"\n];\n\nreturn results.map(item => {\n\n  const id = item._id || item.id;\n\n  // ✅ Set Aside extraction\n  let setAside =\n    item.typeOfSetAside?.value ||\n    item.typeOfSetAsideDescription ||\n    item.typeOfSetAside ||\n    item.setAside ||\n    null;\n\n  // ✅ Text blob\n  const textBlob = (\n    (item.title || \"\") + \" \" +\n    (item.description || \"\")\n  ).toLowerCase();\n\n  // ✅ HUBZone detection\nconst isHubzone =\n  textBlob.includes(\"hubzone\") ||\n  (setAside && setAside.toLowerCase().includes(\"hubzone\")) ||\n  item?.typeOfSetAsideDescription?.toLowerCase()?.includes(\"hubzone\") ||\n  item?.typeOfSetAside?.value?.toLowerCase()?.includes(\"hubzone\");\n\n  // ============================\n  // ✅ NAICS HANDLING\n  // ============================\n\n  let naicsRaw = item.naicsCode || item.naics || \"\";\n  let naicsList = [];\n\n  if (Array.isArray(naicsRaw)) {\n    naicsList = naicsRaw.map(n => {\n      if (typeof n === \"object\") return String(n.code || \"\");\n      return String(n);\n    });\n\n  } else if (typeof naicsRaw === \"object\" && naicsRaw !== null) {\n    naicsList = [String(naicsRaw.code || \"\")];\n\n  } else {\n    naicsList = [String(naicsRaw)];\n  }\n\n  naicsList = naicsList.filter(n => n);\n\n  // ============================\n  // ✅ KEYWORD DETECTION\n  // ============================\n\n  const hasITKeyword = IT_KEYWORDS.some(k => textBlob.includes(k));\n\n  const isClearlyNonIT = NON_IT_KEYWORDS.some(k =>\n    textBlob.includes(k)\n  );\n\n  // ============================\n  // ✅ FINAL IT LOGIC (UPDATED 🔥)\n  // ============================\n\n const isIT =\n  !isClearlyNonIT &&\n  (\n    // Strong IT signal\n    naicsList.some(n =>\n      IT_NAICS.some(code => n.startsWith(code))\n    ) ||\n    (\n      // Keyword must be strong (not just \"system\")\n      hasITKeyword &&\n      (\n        textBlob.includes(\"software\") ||\n        textBlob.includes(\"cloud\") ||\n        textBlob.includes(\"data\") ||\n        textBlob.includes(\"cyber\")\n      )\n    )\n  );\n\n  return {\n    json: {\n      publishDate: item.publishDate || null,\n      responseDate: item.responseDeadLine || null,\n      title: item.title || null,\n      description: item.description || null,\n      noticeId: item.noticeId || null,\n\n      department: item.organizationHierarchy?.[0]?.name || null,\n      office: item.organizationHierarchy?.slice(-1)[0]?.name || null,\n\n      type: item.type?.value || null,\n\n      city: item.organizationHierarchy?.slice(-1)[0]?.address?.city || null,\n      state: item.organizationHierarchy?.slice(-1)[0]?.address?.state || null,\n\n      // ✅ CLEAN OUTPUT\n      naics: naicsList.length ? naicsList.join(\", \") : null,\n      psc: item.classificationCode || null,\n\n      // ✅ FLAGS\n      setAside: setAside,\n      isHubzone: isHubzone,\n      isIT: isIT,\n      hasITKeyword: hasITKeyword,\n\n      url: id\n        ? `https://sam.gov/workspace/contract/opp/${id}/view`\n        : null\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        640
+      ],
+      "id": "d4601980-a61d-4504-aa90-d882bf672950",
+      "name": "Parse3"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1BVhENcGI4NkCI8GRKR41Drzuw8SVJ0qsY_3ryOJG0CU",
+          "mode": "list",
+          "cachedResultName": "Sam.Gov_HubZone",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BVhENcGI4NkCI8GRKR41Drzuw8SVJ0qsY_3ryOJG0CU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hub_Zone",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BVhENcGI4NkCI8GRKR41Drzuw8SVJ0qsY_3ryOJG0CU/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "publishDate": "={{ new Date($json.publishDate).toLocaleDateString(\"en-IN\") }}",
+            "title": "={{ $json.title }}",
+            "department": "={{ $json.department }}",
+            "office": "={{ $json.office }}",
+            "type": "={{ $json.type }}",
+            "city": "={{ $json.city }}",
+            "state": "={{ $json.state }}",
+            "url": "={{ $json.url }}",
+            "IT": "={{ $json.ai_isIT }}",
+            " Scraped Date": "={{ new Date().toLocaleDateString(\"en-IN\") }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": " Scraped Date",
+              "displayName": " Scraped Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "publishDate",
+              "displayName": "publishDate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "department",
+              "displayName": "department",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "office",
+              "displayName": "office",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "type",
+              "displayName": "type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IT",
+              "displayName": "IT",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "city",
+              "displayName": "city",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "state",
+              "displayName": "state",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1056,
+        640
+      ],
+      "id": "85c0c540-5af0-41b3-a3d7-4cdff437c17d",
+      "name": "Append row in sheet3",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "k9bqs7ZwosjV1uUM",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "HubZone",
+        "height": 480,
+        "width": 2176
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -896,
+        416
+      ],
+      "typeVersion": 1,
+      "id": "b4ac7743-6119-4590-81c9-b6b28d99de79",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 30 7 * * 1-5"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -880,
+        624
+      ],
+      "id": "2f0a4a8d-8ae2-40ee-abe9-9d18ec479b2b",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 30 7 * * 1-5"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -880,
+        0
+      ],
+      "id": "7bb029b6-ad93-4bb6-806f-bd99abdf44c2",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1BVhENcGI4NkCI8GRKR41Drzuw8SVJ0qsY_3ryOJG0CU",
+          "mode": "list",
+          "cachedResultName": "Sam.Gov_HubZone",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BVhENcGI4NkCI8GRKR41Drzuw8SVJ0qsY_3ryOJG0CU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hub_Zone",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BVhENcGI4NkCI8GRKR41Drzuw8SVJ0qsY_3ryOJG0CU/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -592,
+        432
+      ],
+      "id": "aa13fbc7-16ee-426e-b6eb-214657d56a6e",
+      "name": "Get row(s) in sheet3",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "k9bqs7ZwosjV1uUM",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const existing = new Set();\n\nfor (const item of items) {\n  const title = (item.json.title || '')\n    .toLowerCase()\n    .replace(/[^\\w\\s]/g, '')\n    .replace(/\\s+/g, ' ')\n    .trim();\n\n  const url = (item.json.url || '')\n    .toLowerCase()\n    .trim();\n\n  const key = title + \"_\" + url;\n\n  if (title && url) {\n    existing.add(key);\n  }\n}\n\nreturn [\n  {\n    json: {\n      existingKeys: Array.from(existing)\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -384,
+        432
+      ],
+      "id": "88296651-4873-4f9c-a355-3331c322bb12",
+      "name": "Store existing keys"
+    },
+    {
+      "parameters": {
+        "jsCode": "const seen = new Set();\nconst existingKeys = new Set(items[0].json.existingKeys);\n\nconst output = [];\n\nfor (const item of items) {\n  const key = item.json.uniqueKey;\n\n  if (!key) continue;\n\n  // skip if already in sheet\n  if (existingKeys.has(key)) continue;\n\n  // skip duplicates in same run\n  if (seen.has(key)) continue;\n\n  seen.add(key);\n  output.push(item);\n}\n\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        784,
+        640
+      ],
+      "id": "af73d3d4-be54-45c6-a6b1-749513079ff7",
+      "name": "Dedup"
+    },
+    {
+      "parameters": {
+        "jsCode": "const existingKeys = $items(\"Store existing keys\")[0].json.existingKeys;\n\nreturn items.map(item => {\n  return {\n    json: {\n      ...item.json,\n      existingKeys\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        640
+      ],
+      "id": "4ecec590-4592-4255-a9d9-010101c06dea",
+      "name": "Attach existingKeys"
+    },
+    {
+      "parameters": {
+        "jsCode": "const seen = new Set();\n\nreturn items.filter(item => {\n  const key =\n    item.json.noticeId ||\n    (item.json.title + \"_\" + item.json.publishDate);\n\n  if (!key) return false;\n\n  if (seen.has(key)) return false;\n\n  seen.add(key);\n  return true;\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        144,
+        1120
+      ],
+      "id": "b045e292-3100-4447-ae47-be29acc30510",
+      "name": "Remove Duplicates3"
+    },
+    {
+      "parameters": {
+        "jsCode": "return Array.from({ length: 20 }, (_, i) => ({ json: { page: i } }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -672,
+        1104
+      ],
+      "id": "cbf45d38-f574-4d51-9c15-fdc6aed1ed00",
+      "name": "Pages4"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -464,
+        1104
+      ],
+      "id": "daf717e1-296a-4ecf-8d9b-0a32e7d36d0b",
+      "name": "Loop Over Items4"
+    },
+    {
+      "parameters": {
+        "url": "=https://sam.gov/api/prod/sgs/v1/search/?index=opp&page={{$json.page}}&size=25&q=HUBZone OR \"HUBZone Small Business\" OR HUBZone set-aside&is_active=true",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0"
+            },
+            {
+              "name": "Accept",
+              "value": "application/hal+json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -208,
+        1120
+      ],
+      "id": "7c6cdd87-5f95-461a-af15-01f9fe80d9bf",
+      "name": "SAM API4"
+    },
+    {
+      "parameters": {
+        "jsCode": "let rawData = items[0].json.data;\n\nif (!rawData) return [];\n\nlet parsedData = JSON.parse(rawData);\nlet results = parsedData._embedded?.results || [];\n\n// ✅ IT NAICS Codes (UPDATED)\nconst IT_NAICS = [\n  \"541511\",\n  \"541512\",\n  \"541513\",\n  \"541519\",\n  \"518210\",\n  \"513210\" // ✅ software publishers\n];\n\n// ✅ IT Keywords\nconst IT_KEYWORDS = [\n  \"software\",\n  \"cloud\",\n  \"cyber\",\n  \"data\",\n  \"ai\",\n  \"machine learning\",\n  \"it support\",\n  \"network\",\n  \"system\",\n  \"application\",\n  \"saas\",\n  \"devops\",\n  \"security\",\n  \"database\"\n];\n\n// ✅ NON-IT Keywords (NEW 🔥)\nconst NON_IT_KEYWORDS = [\n  \"construction\",\n  \"gasket\",\n  \"valve\",\n  \"mechanical\",\n  \"hardware\",\n  \"building\",\n  \"repair\",\n  \"maintenance\",\n  \"equipment\",\n  \"tractor\",\n  \"pump\",\n  \"roof\",\n  \"concrete\",\n  \"aircraft\",\n  \"radar\",\n  \"weapon\",\n  \"missile\",\n  \"engine\",\n  \"vehicle\",\n  \"fuel\",\n  \"lab\",\n  \"ship\"\n];\n\nreturn results.map(item => {\n\n  const id = item._id || item.id;\n\n  // ✅ Set Aside extraction\n  let setAside =\n    item.typeOfSetAside?.value ||\n    item.typeOfSetAsideDescription ||\n    item.typeOfSetAside ||\n    item.setAside ||\n    null;\n\n  // ✅ Text blob\n  const textBlob = (\n    (item.title || \"\") + \" \" +\n    (item.description || \"\")\n  ).toLowerCase();\n\n  // ✅ HUBZone detection\nconst isHubzone =\n  textBlob.includes(\"hubzone\") ||\n  (setAside && setAside.toLowerCase().includes(\"hubzone\")) ||\n  item?.typeOfSetAsideDescription?.toLowerCase()?.includes(\"hubzone\") ||\n  item?.typeOfSetAside?.value?.toLowerCase()?.includes(\"hubzone\");\n\n  // ============================\n  // ✅ NAICS HANDLING\n  // ============================\n\n  let naicsRaw = item.naicsCode || item.naics || \"\";\n  let naicsList = [];\n\n  if (Array.isArray(naicsRaw)) {\n    naicsList = naicsRaw.map(n => {\n      if (typeof n === \"object\") return String(n.code || \"\");\n      return String(n);\n    });\n\n  } else if (typeof naicsRaw === \"object\" && naicsRaw !== null) {\n    naicsList = [String(naicsRaw.code || \"\")];\n\n  } else {\n    naicsList = [String(naicsRaw)];\n  }\n\n  naicsList = naicsList.filter(n => n);\n\n  // ============================\n  // ✅ KEYWORD DETECTION\n  // ============================\n\n  const hasITKeyword = IT_KEYWORDS.some(k => textBlob.includes(k));\n\n  const isClearlyNonIT = NON_IT_KEYWORDS.some(k =>\n    textBlob.includes(k)\n  );\n\n  // ============================\n  // ✅ FINAL IT LOGIC (UPDATED 🔥)\n  // ============================\n\n const isIT =\n  !isClearlyNonIT &&\n  (\n    // Strong IT signal\n    naicsList.some(n =>\n      IT_NAICS.some(code => n.startsWith(code))\n    ) ||\n    (\n      // Keyword must be strong (not just \"system\")\n      hasITKeyword &&\n      (\n        textBlob.includes(\"software\") ||\n        textBlob.includes(\"cloud\") ||\n        textBlob.includes(\"data\") ||\n        textBlob.includes(\"cyber\")\n      )\n    )\n  );\n\n  return {\n    json: {\n      publishDate: item.publishDate || null,\n      responseDate: item.responseDeadLine || null,\n      title: item.title || null,\n      description: item.description || null,\n      noticeId: item.noticeId || null,\n\n      department: item.organizationHierarchy?.[0]?.name || null,\n      office: item.organizationHierarchy?.slice(-1)[0]?.name || null,\n\n      type: item.type?.value || null,\n\n      city: item.organizationHierarchy?.slice(-1)[0]?.address?.city || null,\n      state: item.organizationHierarchy?.slice(-1)[0]?.address?.state || null,\n\n      // ✅ CLEAN OUTPUT\n      naics: naicsList.length ? naicsList.join(\", \") : null,\n      psc: item.classificationCode || null,\n\n      // ✅ FLAGS\n      setAside: setAside,\n      isHubzone: isHubzone,\n      isIT: isIT,\n      hasITKeyword: hasITKeyword,\n\n      url: id\n        ? `https://sam.gov/workspace/contract/opp/${id}/view`\n        : null\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        1120
+      ],
+      "id": "3b2d7fc0-7cee-4312-853a-789070bb5756",
+      "name": "Parse4"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1BVhENcGI4NkCI8GRKR41Drzuw8SVJ0qsY_3ryOJG0CU",
+          "mode": "list",
+          "cachedResultName": "Sam.Gov_HubZone",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BVhENcGI4NkCI8GRKR41Drzuw8SVJ0qsY_3ryOJG0CU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hub_Zone",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BVhENcGI4NkCI8GRKR41Drzuw8SVJ0qsY_3ryOJG0CU/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "publishDate": "={{ new Date($json.publishDate).toLocaleDateString(\"en-IN\") }}",
+            "title": "={{ $json.title }}",
+            "department": "={{ $json.department }}",
+            "office": "={{ $json.office }}",
+            "type": "={{ $json.type }}",
+            "city": "={{ $json.city }}",
+            "state": "={{ $json.state }}",
+            "url": "={{ $json.url }}",
+            "IT": "={{ $json.ai_isIT }}",
+            " Scraped Date": "==NOW()"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": " Scraped Date",
+              "displayName": " Scraped Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "publishDate",
+              "displayName": "publishDate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "department",
+              "displayName": "department",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "office",
+              "displayName": "office",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "type",
+              "displayName": "type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IT",
+              "displayName": "IT",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "city",
+              "displayName": "city",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "state",
+              "displayName": "state",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        976,
+        1216
+      ],
+      "id": "f8c8230c-068c-42b6-a4ea-9c84dd119bcf",
+      "name": "Append row in sheet4",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "k9bqs7ZwosjV1uUM",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "HubZone",
+        "height": 512,
+        "width": 2160
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -896,
+        976
+      ],
+      "typeVersion": 1,
+      "id": "a937e954-6255-49e5-9ae1-066abf3f784d",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are an expert in US government contract classification.\n\nYour job is to analyze opportunities and classify them accurately."
+            },
+            {
+              "content": "=Classify the following government opportunity:\n\nTitle: {{$json.title}}\nDescription: {{$json.description || \"\"}}\n\nInstructions:\n1. Determine if this is IT-related (software, cloud, data, cybersecurity, etc.)\n2. Determine if this opportunity is HUBZone eligible:\n   - Explicitly HUBZone set-aside OR\n   - Likely HUBZone based on small business / federal contracting context\n\nAnswer ONLY in JSON format:\n\n{\n  \"isIT\": true/false,\n  \"isHubzone\": true/false,\n  \"confidence\": 0-100\n}\n\nReturn ONLY raw JSON. Do NOT use markdown or code blocks."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        -48,
+        1328
+      ],
+      "id": "7cc5bcfd-522f-4ece-a786-fe01381ae661",
+      "name": "Message a model1",
+      "alwaysOutputData": true,
+      "credentials": {
+        "openAiApi": {
+          "id": "1hWhKgk746LThDkQ",
+          "name": "Recruitment Agent API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.slice(0, 30);"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        1328
+      ],
+      "id": "25f3a3d4-a550-4a8c-bcaa-5091a6740c83",
+      "name": "limit1"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n\n  let raw = \"\";\n\n  // ✅ Get AI response\n  if (item.json.output?.[0]?.content?.[0]?.text) {\n    raw = item.json.output[0].content[0].text;\n  }\n\n  // 🔥 CLEAN MARKDOWN\n  raw = raw\n    .replace(/```json/g, \"\")\n    .replace(/```/g, \"\")\n    .trim();\n\n  let ai = {};\n  try {\n    ai = JSON.parse(raw);\n  } catch (e) {\n    ai = { isIT: false, isHubzone: false, confidence: 0 };\n  }\n\n  // ✅ IMPORTANT: USE ORIGINAL DATA\n  const original = item.json;\n\n  return {\n    json: {\n      // 🔥 KEEP ORIGINAL FIELDS\n      publishDate: original.publishDate,\n      title: original.title,\n      description: original.description,\n      noticeId: original.noticeId,\n      department: original.department,\n      office: original.office,\n      responseDate: original.responseDate,\n      type: original.type,\n      city: original.city,\n      state: original.state,\n      url: original.url,\n\n      // ✅ AI FIELDS\n      ai_isIT: ai.isIT,\n      ai_isHubzone: ai.isHubzone,\n      ai_confidence: ai.confidence\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        1328
+      ],
+      "id": "0c10c82c-61f5-4124-98ff-cb65758a1028",
+      "name": "Parse AI1"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.filter(item => {\n  return (\n    item.json.isIT === true &&\n    [\"Solicitation\", \"Sources Sought\", \"Combined Synopsis/Solicitation\"]\n      .includes(item.json.type)\n  );\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        1120
+      ],
+      "id": "c9caf2ee-2061-407f-b648-50eee2134640",
+      "name": "filter1"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        608,
+        1216
+      ],
+      "id": "87061182-e14f-4d16-91c0-e6aa46a0e610",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 30 7 * * 1-5"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -864,
+        1104
+      ],
+      "id": "89114310-3099-45e9-ba90-d9cdf9ae621e",
+      "name": "Schedule Trigger2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const title = ($json.title || '')\n  .toLowerCase()\n  .replace(/[^\\w\\s]/g, '')\n  .replace(/\\s+/g, ' ')\n  .trim();\n\nconst url = ($json.url || '')\n  .toLowerCase()\n  .trim();\n\nreturn {\n  json: {\n    ...$json,\n    uniqueKey: `${title}_${url}`\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        640
+      ],
+      "id": "506bd93f-2722-40b5-a748-855a7b3d55eb",
+      "name": "uniqueKey"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Pages": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "SAM API",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Remove Duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SAM API": {
+      "main": [
+        [
+          {
+            "node": "Parse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Filter Biddable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Duplicates": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Biddable": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pages3": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items3": {
+      "main": [
+        [],
+        [
+          {
+            "node": "SAM API3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SAM API3": {
+      "main": [
+        [
+          {
+            "node": "Parse3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse3": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Attach existingKeys",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet3": {
+      "main": [
+        [
+          {
+            "node": "Store existing keys",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store existing keys": {
+      "main": [
+        [
+          {
+            "node": "Pages3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dedup": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attach existingKeys": {
+      "main": [
+        [
+          {
+            "node": "uniqueKey",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Duplicates3": {
+      "main": [
+        [
+          {
+            "node": "filter1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pages4": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items4": {
+      "main": [
+        [],
+        [
+          {
+            "node": "SAM API4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SAM API4": {
+      "main": [
+        [
+          {
+            "node": "Parse4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse4": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items4",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Remove Duplicates3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Parse AI1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "limit1": {
+      "main": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI1": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "filter1": {
+      "main": [
+        [
+          {
+            "node": "limit1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger2": {
+      "main": [
+        [
+          {
+            "node": "Pages4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "uniqueKey": {
+      "main": [
+        [
+          {
+            "node": "Dedup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "2b08501f-2457-4b64-b661-b40a3e8fbfcb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1f3eac6c17fda96d0cfab7ee5590d1dc02e9feec1be0ae6a50ad1c68377ca703"
+  },
+  "nodeGroups": [],
+  "id": "ELj-dMlmf-37mACo1ChVN",
+  "tags": []
+}
